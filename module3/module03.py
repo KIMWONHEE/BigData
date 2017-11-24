@@ -191,7 +191,7 @@ Neighborhood_Good[all_data.Neighborhood=='Somerst'] = 1
 Neighborhood_Good[all_data.Neighborhood=='NoRidge'] = 1
 
 
-svm = SVC(C=100, gamma=0.0001, kernel='rbf')
+svm = SVC(C=100, gamma=0.00015, kernel='rbf')
 
 pc = pd.Series(np.zeros(train.shape[0]))
 pc[:] = 'pc1'
@@ -300,13 +300,13 @@ y = y.drop(outliers_id)
 
 #---Lasso---#
 
-lasso = Lasso(alpha = 0.0002)
+lasso = Lasso(alpha = 0.00025)
 lasso.fit(X_train, y)
 lasso_preds = np.expm1(lasso.predict(X_test))
 
 #---ELASTIC NET---#
 
-elas = ElasticNet(alpha=0.0004, l1_ratio=1.2)
+elas = ElasticNet(alpha=0.00045, l1_ratio=1.2)
 elas.fit(X_train, y)
 elas_preds = np.expm1(elas.predict(X_test))
 
