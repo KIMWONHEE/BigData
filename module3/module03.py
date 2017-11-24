@@ -15,6 +15,11 @@ import itertools
 import xgboost as xgb
 from sklearn.svm import SVC
 from itertools import product, chain
+from sklearn.pipeline import make_pipeline
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.preprocessing import RobustScaler
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.base import BaseEstimator, RegressorMixin	
 
 train = pd.read_csv("/Users/kim_wonhee/Desktop/Module03/train.csv")
 test =  pd.read_csv("/Users/kim_wonhee/Desktop/Module03/test.csv")
@@ -298,6 +303,39 @@ X_train = X_train.drop(outliers_id)
 
 y = y.drop(outliers_id)
 
+lasso = make_pipeline(RobustScaler(), Lasso(alpha =0.0005, random_state=1))
+
+ENet = make_pipeline(RobustScaler(), ElasticNet(alpha=0.001, l1_ratio=.5, random_state=3))
+
+KRR = KernelRidge(alpha=1, kernel='polynomial', degree=2, coef0=2.5)
+
+GBoost = GradientBoostingRegressor(n_estimators=3000, learning_rate=0.05,
+                                   max_depth=4, max_features='sqrt',
+                                   min_samples_leaf=15, min_samples_split=10, 
+                                   loss='huber', random_state =5)
+
+class CustomEnsembleRegressor(BaseEstimator, RegressorMixin):
+    def __init__(self, regressors=None):
+        self.regressors = regressors
+
+    def fit(self, X, y):
+        for regressor in self.regressors:
+            regressor.fit(X, y)
+
+    def predict(self, X):
+        self.predictions_ = list()
+        for regressor in self.regressors:
+            self.predictions_.append(np.exp(regressor.predict(X).ravel()))
+
+        return np.log1p(np.mean(self.predictions_, axis=0))
+
+#---Ensenble---#
+
+regr = CustomEnsembleRegressor([lasso,ENet,KRR,GBoost])
+
+regr.fit(X_train,y)
+regr_preds = np.expm1(regr.predict(X_test))
+
 #---Lasso---#
 
 lasso = Lasso(alpha = 0.00025)
@@ -319,7 +357,7 @@ xgb_preds = np.expm1(xgboost.predict(X_test))
 
 print(xgb_preds)
 
-final_result = 0.40 * lasso_preds + 0.25 * xgb_preds + 0.35 * elas_preds
+final_result = 0.3 * regr_preds + 0.40 * lasso_preds + 0.2 * xgb_preds + 0.1 * elas_preds
 
 solution = pd.DataFrame({"id":test.Id, "SalePrice":final_result}, columns=['id', 'SalePrice'])
-solution.to_csv("result.csv", index = False)
+solution.to_csv("result1.csv", index = False)
