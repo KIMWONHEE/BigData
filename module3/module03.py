@@ -319,7 +319,7 @@ xgb_preds = np.expm1(xgboost.predict(X_test))
 
 print(xgb_preds)
 
-final_result = 0.45 * lasso_preds + 0.25 * xgb_preds + 0.30 * elas_preds
+final_result = 0.47 * lasso_preds + 0.22 * xgb_preds + 0.31 * elas_preds
 
 solution = pd.DataFrame({"id":test.Id, "SalePrice":final_result}, columns=['id', 'SalePrice'])
 solution.to_csv("result.csv", index = False)
